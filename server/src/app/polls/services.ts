@@ -6,6 +6,7 @@ import {
   responsesTable,
   answersTable,
 } from '../../db/schema.js';
+import { getIo } from '../socket/index.js';
 import ApiError from '../utils/api-errors.js';
 import type { CreatePollInput } from './dto/create-polls.dto.js';
 import type { SubmitResponseInput } from './dto/submit-response.dto.js';
@@ -71,11 +72,7 @@ const getPoll = async (pollId: any) => {
 
 // ── SUBMIT RESPONSE ──────────────────────────────────────────
 // userId is optional — null means anonymous
-const submitResponse = async (
-  pollId: any,
-  { answers }: SubmitResponseInput,
-  userId?: string,
-) => {
+const submitResponse = async (pollId: any, { answers }: SubmitResponseInput, userId?: string) => {
   const [poll] = await db.select().from(pollsTable).where(eq(pollsTable.id, pollId));
 
   if (!poll) throw ApiError.notFound('Poll not found');
@@ -127,22 +124,31 @@ const submitResponse = async (
       })),
     );
 
-    return { responseId: response!.id };
+    // Count inside the same transaction so the number is accurate
+    const [total] = await tx
+      .select({ total: count() })
+      .from(responsesTable)
+      .where(eq(responsesTable.pollId, pollId));
+
+    const io = getIo();
+    io.to(`poll:${pollId}`).emit('new-response', {
+      pollId,
+      totalResponses: total,
+    });
+
+    return { responseId: response.id };
   });
 };
 
 // ── ANALYTICS (creator only) ─────────────────────────────────
 const getAnalytics = async (pollId: any, creatorId: string) => {
-  const [poll] = await db
-    .select()
-    .from(pollsTable)
-    .where(eq(pollsTable.id, pollId));
+  const [poll] = await db.select().from(pollsTable).where(eq(pollsTable.id, pollId));
 
   if (!poll) throw ApiError.notFound('Poll not found');
   if (poll.creatorId !== creatorId) throw ApiError.forbidden('Not your poll');
 
   // Total responses
-  const [ total ] = await db
+  const [total] = await db
     .select({ total: count() })
     .from(responsesTable)
     .where(eq(responsesTable.pollId, pollId));
@@ -155,10 +161,7 @@ const getAnalytics = async (pollId: any, creatorId: string) => {
       count: count(),
     })
     .from(answersTable)
-    .innerJoin(
-      responsesTable,
-      eq(answersTable.responseId, responsesTable.id)
-    )
+    .innerJoin(responsesTable, eq(answersTable.responseId, responsesTable.id))
     .where(eq(responsesTable.pollId, pollId))
     .groupBy(answersTable.questionId, answersTable.optionId);
 
@@ -167,18 +170,12 @@ const getAnalytics = async (pollId: any, creatorId: string) => {
 
 // ── PUBLISH RESULTS ──────────────────────────────────────────
 const publishResults = async (pollId: any, creatorId: string) => {
-  const [poll] = await db
-    .select()
-    .from(pollsTable)
-    .where(eq(pollsTable.id, pollId));
+  const [poll] = await db.select().from(pollsTable).where(eq(pollsTable.id, pollId));
 
   if (!poll) throw ApiError.notFound('Poll not found');
   if (poll.creatorId !== creatorId) throw ApiError.forbidden('Not your poll');
 
-  await db
-    .update(pollsTable)
-    .set({ isPublished: true })
-    .where(eq(pollsTable.id, pollId));
+  await db.update(pollsTable).set({ isPublished: true }).where(eq(pollsTable.id, pollId));
 
   return { message: 'Results published' };
 };

@@ -1,12 +1,17 @@
 import { z } from 'zod';
+import BaseDto from '../../dto/base.dto.js';
 
-export const SubmitResponseDto = z.object({
+const SubmitResponseSchema = z.object({
   answers: z.array(
     z.object({
-      questionId: z.string().uuid(),
-      optionId: z.string().uuid(),
+      questionId: z.string(),
+      optionId: z.string(),
     })
   ).min(1),
 });
 
-export type SubmitResponseInput = z.infer<typeof SubmitResponseDto>;
+export class SubmitResponseDto extends BaseDto {
+  static schema = SubmitResponseSchema;
+}
+
+export type SubmitResponseInput = z.infer<typeof SubmitResponseSchema>;

@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import BaseDto from '../../dto/base.dto.js';
 
-export const CreatePollDto = z.object({
+const CreatePollSchema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
   isAnonymous: z.boolean().default(false),
-  expiresAt: z.string().datetime(), // ISO string from frontend
+  expiresAt: z.string(), // ISO string from frontend
   questions: z
     .array(
       z.object({
@@ -16,4 +17,8 @@ export const CreatePollDto = z.object({
     .min(1)
 });
 
-export type CreatePollInput = z.infer<typeof CreatePollDto>;
+export class CreatePollDto extends BaseDto {
+  static schema = CreatePollSchema;
+}
+
+export type CreatePollInput = z.infer<typeof CreatePollSchema>;
