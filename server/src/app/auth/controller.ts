@@ -11,18 +11,28 @@ const register = async (req: Request, res: Response) => {
 const login = async (req: Request, res: Response) => {
   const { user, accessToken, refreshToken } = await authService.login(req.body);
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: true,
+  // Refresh token: long-lived token used to get new access tokens.
+  // This should typically live longer than the access token.
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true, // JavaScript in the browser can't read it. Because apparently we don't trust browsers with sharp objects.
+    secure: true,   // Sent only over HTTPS.
+    sameSite: "strict", // Helps protect against CSRF.
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  ApiResponse.ok(res, 'Login success', { user, accessToken, refreshToken });
+  // Access token: short-lived token used for authenticated requests.
+  // Usually expires quickly to limit damage if stolen.
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  ApiResponse.ok(res, "Login success", {
+    user,
+    accessToken, // Optional if you want the client to also store/use it directly.
+  });
 };
 
 const refresh = async (req: Request, res: Response) => {
