@@ -1,16 +1,17 @@
-import { createFileRoute, redirect, Outlet } from '@tanstack/react-router';
-import { authApi } from '../api/auth.api';
+import { createFileRoute, redirect, Outlet } from "@tanstack/react-router"
+import { authApi } from "../api/auth.api"
 // import Nav from '../components/app/nav';
 
-export const Route = createFileRoute('/_authenticated')({
+export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context }) => {
     try {
-      const { data } = await authApi.getMe();
-      console.log(data.data);
-      
-      return { user: data.data.user };
+      const { data } = await authApi.getMe()
+      console.log(data.data)
+      console.log(context)
+
+      return { user: data.data.user }
     } catch {
-      throw redirect({ to: '/login' });
+      throw redirect({ to: "/login" })
     }
   },
   component: () => (
@@ -21,4 +22,4 @@ export const Route = createFileRoute('/_authenticated')({
       </main>
     </div>
   ),
-});
+})

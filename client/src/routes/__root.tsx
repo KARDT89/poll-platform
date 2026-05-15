@@ -1,8 +1,8 @@
-import * as React from 'react'
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { Toaster } from '@/components/ui/sonner';
-import { Navbar } from '@/components/Navbar';
+import * as React from "react"
+import { Outlet, createRootRoute } from "@tanstack/react-router"
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
+import { Toaster } from "@/components/ui/sonner"
+import { Navbar } from "@/components/Navbar"
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -11,9 +11,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <React.Fragment>
-      <Navbar/>
+      <Navbar />
       <Outlet />
-      <Toaster richColors position='top-right'/>
+      <Toaster richColors position="top-right" />
       <TanStackRouterDevtools />
     </React.Fragment>
   )

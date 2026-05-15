@@ -1,24 +1,24 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { motion} from 'framer-motion'
-import { toast } from 'sonner'
-import { useState, useEffect } from 'react'
-import { pollsApi } from '@/api/polls.api'
-import { useAuth } from '@/api/auth-context'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useQuery, useMutation } from "@tanstack/react-query"
+import { motion } from "framer-motion"
+import { toast } from "sonner"
+import { useState, useEffect } from "react"
+import { pollsApi } from "@/api/polls.api"
+import { useAuth } from "@/api/auth-context"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   IconClock,
   IconLoader2,
   IconLock,
   IconCheck,
   IconAlertTriangle,
-} from '@tabler/icons-react'
-import { formatDistanceToNow } from 'date-fns'
-import { socket } from '@/lib/socket'
-import { IconUser } from '@tabler/icons-react'
+} from "@tabler/icons-react"
+import { formatDistanceToNow } from "date-fns"
+import { socket } from "@/lib/socket"
+import { IconUser } from "@tabler/icons-react"
 
-export const Route = createFileRoute('/polls/$pollId')({
+export const Route = createFileRoute("/polls/$pollId")({
   component: RespondPollPage,
 })
 
@@ -29,30 +29,29 @@ function RespondPollPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
   const [totalResponses, setTotalResponses] = useState<number | null>(null)
-const [viewers, setViewers] = useState<number>(1)
+  const [viewers, setViewers] = useState<number>(1)
 
-useEffect(() => {
-  socket.emit('join-poll', pollId)
+  useEffect(() => {
+    socket.emit("join-poll", pollId)
 
-  socket.on('new-response', (data) => {
-    setTotalResponses(data.totalResponses)
-  })
+    socket.on("new-response", data => {
+      setTotalResponses(data.totalResponses)
+    })
 
-  socket.on('viewers-update', (data) => {
-    setViewers(data.count)
-  })
+    socket.on("viewers-update", data => {
+      setViewers(data.count)
+    })
 
-  return () => {
-    socket.emit('leave-poll', pollId)
-    socket.off('new-response')
-    socket.off('viewers-update')
-  }
-}, [pollId])
+    return () => {
+      socket.emit("leave-poll", pollId)
+      socket.off("new-response")
+      socket.off("viewers-update")
+    }
+  }, [pollId])
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['poll', pollId],
-   queryFn: () => pollsApi.getById(pollId).then(r => ({ poll: r.data.data })),
-
+    queryKey: ["poll", pollId],
+    queryFn: () => pollsApi.getById(pollId).then(r => ({ poll: r.data.data })),
   })
 
   const mutation = useMutation({
@@ -67,7 +66,7 @@ useEffect(() => {
       setSubmitted(true)
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Submission failed.')
+      toast.error(err?.response?.data?.message ?? "Submission failed.")
     },
   })
 
@@ -79,7 +78,7 @@ useEffect(() => {
 
     const unanswered = mandatoryIds.filter((id: string) => !answers[id])
     if (unanswered.length > 0) {
-      toast.error('Please answer all mandatory questions.')
+      toast.error("Please answer all mandatory questions.")
       return
     }
     mutation.mutate()
@@ -87,7 +86,7 @@ useEffect(() => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
         <IconLoader2 className="animate-spin text-zinc-600" size={24} />
       </div>
     )
@@ -95,9 +94,9 @@ useEffect(() => {
 
   if (error || !data?.poll) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8">
         <div className="text-center">
-          <p className="text-zinc-500 text-sm">Poll not found.</p>
+          <p className="text-sm text-zinc-500">Poll not found.</p>
         </div>
       </div>
     )
@@ -111,21 +110,28 @@ useEffect(() => {
   // Submitted state
   if (submitted) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-sm"
+          className="max-w-sm text-center"
         >
-          <div className="w-16 h-16 rounded-full bg-red-950 border border-red-900 flex items-center justify-center mx-auto mb-6">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-red-900 bg-red-950">
             <IconCheck size={28} className="text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Response submitted</h2>
-          <p className="text-zinc-500 text-sm">Thanks for your feedback.</p>
+          <h2 className="mb-2 text-2xl font-bold text-white">
+            Response submitted
+          </h2>
+          <p className="text-sm text-zinc-500">Thanks for your feedback.</p>
           {poll.isPublished && (
             <Button
-              onClick={() => navigate({ to: '/polls/$pollId/results', params: { pollId: poll.id } })}
-              className="mt-6 bg-zinc-800 hover:bg-zinc-700 text-white"
+              onClick={() =>
+                navigate({
+                  to: "/polls/$pollId/results",
+                  params: { pollId: poll.id },
+                })
+              }
+              className="mt-6 bg-zinc-800 text-white hover:bg-zinc-700"
             >
               View results
             </Button>
@@ -136,35 +142,44 @@ useEffect(() => {
   }
 
   if (poll.isPublished) {
-  return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
-      <div className="text-center max-w-sm">
-        <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-6">
-          <IconCheck size={28} className="text-zinc-500" />
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8">
+        <div className="max-w-sm text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
+            <IconCheck size={28} className="text-zinc-500" />
+          </div>
+          <h2 className="mb-2 text-2xl font-bold text-white">Results are in</h2>
+          <p className="mb-6 text-sm text-zinc-500">
+            This poll has been closed and results are published.
+          </p>
+          <Button
+            onClick={() =>
+              navigate({
+                to: "/polls/$pollId/results",
+                params: { pollId: pollId },
+              })
+            }
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            View results
+          </Button>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Results are in</h2>
-        <p className="text-zinc-500 text-sm mb-6">This poll has been closed and results are published.</p>
-        <Button
-          onClick={() => navigate({ to: '/polls/$pollId/results', params: { pollId: pollId } })}
-          className="bg-red-600 hover:bg-red-700 text-white"
-        >
-          View results
-        </Button>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   // Expired state
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-6">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8">
+        <div className="max-w-sm text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
             <IconAlertTriangle size={28} className="text-zinc-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Poll expired</h2>
-          <p className="text-zinc-500 text-sm">This poll is no longer accepting responses.</p>
+          <h2 className="mb-2 text-2xl font-bold text-white">Poll expired</h2>
+          <p className="text-sm text-zinc-500">
+            This poll is no longer accepting responses.
+          </p>
         </div>
       </div>
     )
@@ -173,16 +188,18 @@ useEffect(() => {
   // Auth required state
   if (requiresAuth) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-6">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-8">
+        <div className="max-w-sm text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
             <IconLock size={28} className="text-zinc-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Login required</h2>
-          <p className="text-zinc-500 text-sm mb-6">This poll requires authentication.</p>
+          <h2 className="mb-2 text-2xl font-bold text-white">Login required</h2>
+          <p className="mb-6 text-sm text-zinc-500">
+            This poll requires authentication.
+          </p>
           <Button
-            onClick={() => navigate({ to: '/login' })}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={() => navigate({ to: "/login" })}
+            className="bg-red-600 text-white hover:bg-red-700"
           >
             Sign in to respond
           </Button>
@@ -193,30 +210,33 @@ useEffect(() => {
 
   const answeredCount = Object.keys(answers).length
   const totalMandatory = poll.questions.filter((q: any) => q.isMandatory).length
-  const progress = totalMandatory > 0 ? (
-    poll.questions.filter((q: any) => q.isMandatory && answers[q.id]).length / totalMandatory
-  ) : 1
+  const progress =
+    totalMandatory > 0
+      ? poll.questions.filter((q: any) => q.isMandatory && answers[q.id])
+          .length / totalMandatory
+      : 1
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
       <div className="border-b border-zinc-900 px-6 py-4">
         <div className="flex items-center gap-4 text-xs">
-  <div className="flex items-center gap-1.5 text-zinc-500">
-    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-    <span>{viewers} viewing</span>
-  </div>
-  <div className="flex items-center gap-1.5 text-zinc-500">
-    <IconClock size={12} />
-    Closes {formatDistanceToNow(new Date(poll.expiresAt), { addSuffix: true })}
-  </div>
-  {totalResponses !== null && (
-    <div className="flex items-center gap-1.5 text-zinc-500">
-      <IconUser size={12} />
-      {totalResponses} responses
-    </div>
-  )}
-</div>
+          <div className="flex items-center gap-1.5 text-zinc-500">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+            <span>{viewers} viewing</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-zinc-500">
+            <IconClock size={12} />
+            Closes{" "}
+            {formatDistanceToNow(new Date(poll.expiresAt), { addSuffix: true })}
+          </div>
+          {totalResponses !== null && (
+            <div className="flex items-center gap-1.5 text-zinc-500">
+              <IconUser size={12} />
+              {totalResponses} responses
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -229,27 +249,29 @@ useEffect(() => {
         />
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="mx-auto max-w-2xl px-6 py-12">
         {/* Poll header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="mb-4 flex items-center gap-2">
             {poll.isAnonymous ? (
-              <Badge className="bg-zinc-900 text-zinc-400 border-zinc-800 text-[10px] tracking-wider uppercase">
+              <Badge className="border-zinc-800 bg-zinc-900 text-[10px] tracking-wider text-zinc-400 uppercase">
                 Anonymous
               </Badge>
             ) : (
-              <Badge className="bg-zinc-900 text-zinc-400 border-zinc-800 text-[10px] tracking-wider uppercase flex items-center gap-1">
+              <Badge className="flex items-center gap-1 border-zinc-800 bg-zinc-900 text-[10px] tracking-wider text-zinc-400 uppercase">
                 <IconLock size={10} />
                 Authenticated
               </Badge>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">{poll.title}</h1>
-          {poll.description && <p className="text-zinc-400 text-sm">{poll.description}</p>}
+          <h1 className="mb-2 text-2xl font-bold text-white">{poll.title}</h1>
+          {poll.description && (
+            <p className="text-sm text-zinc-400">{poll.description}</p>
+          )}
         </motion.div>
 
         {/* Questions */}
@@ -262,16 +284,18 @@ useEffect(() => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: qi * 0.08 }}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"
+                className="rounded-xl border border-zinc-800 bg-zinc-900 p-6"
               >
-                <div className="flex items-start gap-3 mb-5">
-                  <span className="text-xs font-mono text-zinc-600 mt-0.5">0{qi + 1}</span>
+                <div className="mb-5 flex items-start gap-3">
+                  <span className="mt-0.5 font-mono text-xs text-zinc-600">
+                    0{qi + 1}
+                  </span>
                   <div className="flex-1">
-                    <p className="text-white font-medium">{q.text}</p>
+                    <p className="font-medium text-white">{q.text}</p>
                     {q.isMandatory ? (
-                      <span className="text-red-500 text-xs">* Required</span>
+                      <span className="text-xs text-red-500">* Required</span>
                     ) : (
-                      <span className="text-zinc-600 text-xs">Optional</span>
+                      <span className="text-xs text-zinc-600">Optional</span>
                     )}
                   </div>
                 </div>
@@ -283,17 +307,25 @@ useEffect(() => {
                       <button
                         key={opt.id}
                         type="button"
-                        onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt.id }))}
-                        className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
+                        onClick={() =>
+                          setAnswers(prev => ({ ...prev, [q.id]: opt.id }))
+                        }
+                        className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all ${
                           selected
-                            ? 'border-red-600 bg-red-950/30 text-white'
-                            : 'border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white'
+                            ? "border-red-600 bg-red-950/30 text-white"
+                            : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white"
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                          selected ? 'border-red-500 bg-red-600' : 'border-zinc-700'
-                        }`}>
-                          {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        <div
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                            selected
+                              ? "border-red-500 bg-red-600"
+                              : "border-zinc-700"
+                          }`}
+                        >
+                          {selected && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
                         </div>
                         <span className="text-sm">{opt.text}</span>
                       </button>
@@ -314,15 +346,15 @@ useEffect(() => {
           <Button
             onClick={handleSubmit}
             disabled={mutation.isPending}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
+            className="bg-red-600 px-8 text-white hover:bg-red-700"
           >
             {mutation.isPending ? (
               <IconLoader2 className="animate-spin" size={16} />
             ) : (
-              'Submit response'
+              "Submit response"
             )}
           </Button>
-          <p className="text-zinc-600 text-xs">
+          <p className="text-xs text-zinc-600">
             {answeredCount} of {poll.questions.length} answered
           </p>
         </motion.div>
