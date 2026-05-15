@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { authApi } from '../api/auth.api';
+import { IconLoader } from '@tabler/icons-react';
 
 interface User {
   id: string;
@@ -20,16 +21,40 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    // token exists, re-hydrate user
+    authApi.getMe()
+      .then(({ data }) => setUser(data.data.user))
+      .catch(() => localStorage.removeItem('accessToken'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-3">
+      <IconLoader className="h-8 w-8 animate-spin text-muted-foreground" />
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
   const login = async (email: string, password: string) => {
     const { data } = await authApi.login({ email, password });
-    sessionStorage.setItem('accessToken', data.data.accessToken);
+    localStorage.setItem('accessToken', data.data.accessToken);
     
     setUser(data.data.user);
   };
 
   const logout = async () => {
     await authApi.logout();
-    sessionStorage.removeItem('accessToken');
+    localStorage.removeItem('accessToken');
     setUser(null);
   };
 

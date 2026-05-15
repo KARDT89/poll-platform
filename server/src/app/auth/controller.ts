@@ -32,6 +32,7 @@ const login = async (req: Request, res: Response) => {
   ApiResponse.ok(res, "Login success", {
     user,
     accessToken, // Optional if you want the client to also store/use it directly.
+    refreshToken, // Optional if you want the client to also store/use it directly.
   });
 };
 
@@ -46,7 +47,7 @@ const refresh = async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
-  ApiResponse.ok(res, 'Token refreshed', { accessToken });
+  ApiResponse.ok(res, 'Token refreshed', { accessToken, refreshToken });
 };
 
 const me = async (req: Request, res: Response) => {

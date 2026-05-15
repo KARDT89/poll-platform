@@ -77,7 +77,7 @@ const login = async ({ email, password }: LoginInput) => {
     .set({ refreshToken: hashedRefreshToken })
     .where(eq(usersTable.id, user.id));
 
-  return { user: user.id, accessToken, refreshToken };
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, accessToken, refreshToken };
 };
 
 const refresh = async (token: string) => {

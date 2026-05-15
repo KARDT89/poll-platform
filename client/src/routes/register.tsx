@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, redirect } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -11,6 +11,17 @@ import { Label } from '@/components/ui/label'
 import { IconArrowRight, IconLoader2 } from '@tabler/icons-react'
 
 export const Route = createFileRoute('/register')({
+  beforeLoad: async () => {
+      try {
+        await authApi.getMe();
+        // if getMe succeeds, user is logged in
+        throw redirect({ to: '/dashboard' });
+      } catch (e) {
+        // if it's our redirect, rethrow it
+        if (e instanceof Response || (e as any).to) throw e;
+        // otherwise getMe failed = not logged in, stay on login
+      }
+    },
   component: RegisterPage,
 })
 
